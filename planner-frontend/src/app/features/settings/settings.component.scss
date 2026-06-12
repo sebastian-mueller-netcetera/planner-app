@@ -95,3 +95,25 @@
     align-self: flex-end;
   }
 }
+
+.setting-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin: var(--spacing-xs) 0 0;
+  font-size: var(--font-size-sm);
+
+  .status-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &--connected {
+    color: var(--color-success, #16a34a);
+  }
+
+  &--error {
+    color: var(--color-danger);
+  }
+}

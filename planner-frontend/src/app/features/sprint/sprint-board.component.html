@@ -56,14 +56,19 @@
             <span class="column-title">{{ column.label }}</span>
             <span class="column-count">{{ column.tasks.length }}</span>
           </div>
-          <div class="column-body">
+          <div class="column-body"
+               cdkDropList
+               [id]="column.id"
+               [cdkDropListData]="column.tasks"
+               [cdkDropListConnectedTo]="['BACKLOG', 'IN_PROGRESS', 'DONE']"
+               (cdkDropListDropped)="onDrop($event, column.id)">
             @if (column.tasks.length === 0) {
               <div class="column-empty">
                 <p>No tasks</p>
               </div>
             } @else {
               @for (task of column.tasks; track task.id) {
-                <div class="task-card">
+                <div class="task-card" cdkDrag [cdkDragData]="task">
                   <div class="task-card-header">
                     <span class="task-title">{{ task.title }}</span>
                   </div>

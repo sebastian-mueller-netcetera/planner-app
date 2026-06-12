@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +24,22 @@ public class UserService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateGoogleRefreshToken(UUID userId, String encryptedToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        user.setGoogleRefreshTokenEncrypted(encryptedToken);
+        userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasGoogleRefreshToken(UUID userId) {
+        return userRepository.findById(userId)
+                .map(user -> user.getGoogleRefreshTokenEncrypted() != null
+                        && !user.getGoogleRefreshTokenEncrypted().isBlank())
+                .orElse(false);
     }
 
     private UserSummaryResponse toResponse(User user) {

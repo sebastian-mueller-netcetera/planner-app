@@ -27,3 +27,13 @@ app:
     refresh-expiration-ms: 604800000
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+
+google:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID:placeholder}
+    client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/v1/integrations/google-calendar/callback}
+    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+    # Generate with: openssl rand -base64 32
+    # Must be a 32-byte (256-bit) base64-encoded key
+    encryption-key-base64: ${GOOGLE_TOKEN_ENCRYPTION_KEY:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}

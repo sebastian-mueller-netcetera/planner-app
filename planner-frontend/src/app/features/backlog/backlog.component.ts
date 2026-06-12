@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
 import { RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
@@ -21,7 +22,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 
 import { TaskService } from '../../core/tasks/task.service';
-import { TaskListItem, TaskStatus } from '../../core/tasks/task.models';
+import { TaskListItem, TaskStatus, SprintSummary } from '../../core/tasks/task.models';
 
 @Component({
   selector: 'app-backlog',
@@ -34,6 +35,7 @@ import { TaskListItem, TaskStatus } from '../../core/tasks/task.models';
     MatProgressSpinnerModule,
     MatSelectModule,
     MatChipsModule,
+    MatMenuModule,
     RouterLink,
     DatePipe,
   ],
@@ -50,6 +52,8 @@ export class BacklogComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly searchQuery = signal('');
   readonly statusFilter = signal<TaskStatus | ''>('');
+  readonly sprints = signal<SprintSummary[]>([]);
+  readonly movingTaskId = signal<string | null>(null);
 
   private readonly search$ = new Subject<string>();
   private readonly filter$ = new Subject<TaskStatus | ''>();
@@ -62,6 +66,10 @@ export class BacklogComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.taskService.getSprints()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((sprints) => this.sprints.set(sprints));
+
     this.search$
       .pipe(
         debounceTime(300),
@@ -115,6 +123,37 @@ export class BacklogComponent implements OnInit {
     this.statusFilter.set(status);
     this.error.set(null);
     this.filter$.next(status);
+  }
+
+  moveToSprint(event: Event, taskId: string, sprintId: string | null): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const previousTasks = this.tasks();
+    const sprintName = sprintId
+      ? this.sprints().find(s => s.id === sprintId)?.name ?? null
+      : null;
+
+    // Optimistic update
+    this.movingTaskId.set(taskId);
+    this.tasks.set(
+      previousTasks.map(t =>
+        t.id === taskId
+          ? { ...t, sprint: sprintId ? { id: sprintId, name: sprintName! } : null }
+          : t
+      )
+    );
+
+    this.taskService.updateTask(taskId, { sprintId })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.movingTaskId.set(null),
+        error: () => {
+          // Revert on failure
+          this.tasks.set(previousTasks);
+          this.movingTaskId.set(null);
+        },
+      });
   }
 
   private loadTasks(): void {

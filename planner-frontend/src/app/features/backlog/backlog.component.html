@@ -71,6 +71,31 @@
               </span>
             </div>
             <div class="task-card-meta">
+              <button
+                class="sprint-picker-trigger"
+                [matMenuTriggerFor]="sprintMenu"
+                [disabled]="movingTaskId() === task.id"
+                (click)="$event.preventDefault(); $event.stopPropagation()"
+              >
+                @if (task.sprint) {
+                  <mat-icon class="sprint-icon">directions_run</mat-icon>
+                  <span class="sprint-name">{{ task.sprint.name }}</span>
+                } @else {
+                  <mat-icon class="sprint-icon muted">directions_run</mat-icon>
+                  <span class="sprint-name muted">No sprint</span>
+                }
+                <mat-icon class="dropdown-arrow">arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #sprintMenu="matMenu" class="sprint-menu">
+                <button mat-menu-item (click)="moveToSprint($event, task.id, null)">
+                  <span class="menu-item-muted">No sprint</span>
+                </button>
+                @for (sprint of sprints(); track sprint.id) {
+                  <button mat-menu-item (click)="moveToSprint($event, task.id, sprint.id)">
+                    {{ sprint.name }}
+                  </button>
+                }
+              </mat-menu>
               @if (task.dueDate) {
                 <span class="due-date">
                   <mat-icon>event</mat-icon>

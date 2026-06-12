@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, signal, inject, OnInit, computed } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -19,6 +20,7 @@ interface BoardColumn {
   selector: 'app-sprint-board',
   standalone: true,
   imports: [
+    DragDropModule,
     MatIconModule,
     MatButtonModule,
     MatChipsModule,
@@ -54,7 +56,7 @@ export class SprintBoardComponent implements OnInit {
   readonly columns = computed<BoardColumn[]>(() => {
     const allTasks = this.tasks();
     return [
-      { id: 'BACKLOG' as TaskStatus, label: 'Backlog', tasks: allTasks.filter(t => t.status === 'BACKLOG') },
+      { id: 'BACKLOG' as TaskStatus, label: 'Todo', tasks: allTasks.filter(t => t.status === 'BACKLOG') },
       { id: 'IN_PROGRESS' as TaskStatus, label: 'In Progress', tasks: allTasks.filter(t => t.status === 'IN_PROGRESS') },
       { id: 'DONE' as TaskStatus, label: 'Done', tasks: allTasks.filter(t => t.status === 'DONE') },
     ];
@@ -98,6 +100,38 @@ export class SprintBoardComponent implements OnInit {
       error: () => {
         this.creatingSpint.set(false);
         this.error.set('Failed to create sprint. Please try again.');
+      }
+    });
+  }
+
+  onDrop(event: CdkDragDrop<TaskListItem[]>, targetStatus: TaskStatus): void {
+    if (event.previousContainer === event.container) {
+      // Same column reorder — no status change needed
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      return;
+    }
+
+    // Cross-column drop
+    const task = event.previousContainer.data[event.previousIndex];
+    const previousStatus = task.status;
+
+    // Optimistic update
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex,
+    );
+    this.tasks.update(ts =>
+      ts.map(t => t.id === task.id ? { ...t, status: targetStatus } : t)
+    );
+
+    this.taskService.updateTask(task.id, { status: targetStatus }).subscribe({
+      error: () => {
+        // Revert on failure
+        this.tasks.update(ts =>
+          ts.map(t => t.id === task.id ? { ...t, status: previousStatus } : t)
+        );
       }
     });
   }

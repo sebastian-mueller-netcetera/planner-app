@@ -17,14 +17,38 @@
               <p class="setting-description">
                 Sync task deadlines with your Google Calendar.
               </p>
-              <p class="setting-hint">Coming soon — Google OAuth not yet configured</p>
+              @if (googleCalendarConnected()) {
+                <p class="setting-status setting-status--connected">
+                  <mat-icon class="status-icon">check_circle</mat-icon>
+                  Connected
+                </p>
+              }
+              @if (googleCalendarError(); as errorMsg) {
+                <p class="setting-status setting-status--error">
+                  <mat-icon class="status-icon">error_outline</mat-icon>
+                  {{ errorMsg }}
+                </p>
+              }
             </div>
           </div>
           <div class="setting-action">
-            <button mat-flat-button disabled>
-              <mat-icon>link</mat-icon>
-              Connect
-            </button>
+            @if (googleCalendarConnected()) {
+              <button mat-flat-button disabled>
+                <mat-icon>check</mat-icon>
+                Connected ✓
+              </button>
+            } @else {
+              <button mat-flat-button color="primary"
+                      [disabled]="connectingCalendar()"
+                      (click)="connectCalendar()">
+                @if (connectingCalendar()) {
+                  <mat-spinner diameter="18" />
+                } @else {
+                  <mat-icon>link</mat-icon>
+                }
+                Connect Google Calendar
+              </button>
+            }
           </div>
         </div>
       </mat-card-content>
