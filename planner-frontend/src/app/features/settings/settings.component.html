@@ -15,25 +15,16 @@
             <div>
               <h3 class="setting-title">Google Calendar</h3>
               <p class="setting-description">
-                @if (calendarConnected()) {
-                  Connected — tasks with due dates sync to your calendar.
-                } @else {
-                  Connect your calendar to sync task deadlines.
-                }
+                Sync task deadlines with your Google Calendar.
               </p>
+              <p class="setting-hint">Coming soon — Google OAuth not yet configured</p>
             </div>
           </div>
           <div class="setting-action">
-            @if (calendarConnected()) {
-              <button mat-stroked-button color="warn" (click)="disconnectCalendar()">
-                Disconnect
-              </button>
-            } @else {
-              <button mat-flat-button color="primary" (click)="connectCalendar()">
-                <mat-icon>link</mat-icon>
-                Connect
-              </button>
-            }
+            <button mat-flat-button disabled>
+              <mat-icon>link</mat-icon>
+              Connect
+            </button>
           </div>
         </div>
       </mat-card-content>

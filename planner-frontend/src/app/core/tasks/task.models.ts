@@ -78,3 +78,18 @@ export interface SprintSummary {
   endDate: string;
   status: string;
 }
+
+export interface UserSummary {
+  id: string;
+  email: string;
+  displayName: string;
+}
+
+export interface PagedResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}

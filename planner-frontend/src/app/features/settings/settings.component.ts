@@ -24,12 +24,11 @@ export class SettingsComponent {
   readonly calendarConnected = signal(false);
 
   connectCalendar(): void {
-    // TODO: Wire to Google OAuth flow
-    this.calendarConnected.set(true);
+    // OAuth not yet configured — button is disabled in template
   }
 
   disconnectCalendar(): void {
-    this.calendarConnected.set(false);
+    // OAuth not yet configured — button is disabled in template
   }
 
   logout(): void {

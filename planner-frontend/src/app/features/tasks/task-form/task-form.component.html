@@ -40,7 +40,7 @@
       <mat-label>Assignee</mat-label>
       <mat-select formControlName="assigneeId">
         <mat-option value="">Unassigned</mat-option>
-        @for (assignee of availableAssignees; track assignee.id) {
+        @for (assignee of availableAssignees(); track assignee.id) {
           <mat-option [value]="assignee.id">{{ assignee.displayName }}</mat-option>
         }
       </mat-select>
@@ -70,7 +70,8 @@
       </mat-chip-set>
       <mat-form-field appearance="outline" class="full-width label-select">
         <mat-label>Add label</mat-label>
-        <mat-select (selectionChange)="addLabel($event.value)">
+        <mat-select [value]="selectedLabelValue()" (selectionChange)="addLabel($event.value)">
+          <mat-option value="">— Select a label —</mat-option>
           @for (label of availableLabels(); track label.id) {
             <mat-option [value]="label.id">
               {{ label.name }}

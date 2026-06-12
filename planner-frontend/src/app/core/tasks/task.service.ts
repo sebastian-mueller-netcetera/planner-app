@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Task, TaskPage, TaskRequest, TaskLabel, SprintSummary, Comment, TaskQueryParams } from './task.models';
+import { Task, TaskPage, TaskRequest, TaskLabel, SprintSummary, UserSummary, PagedResponse, Comment, TaskQueryParams } from './task.models';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -47,6 +48,11 @@ export class TaskService {
   }
 
   getSprints(): Observable<SprintSummary[]> {
-    return this.http.get<SprintSummary[]>(`${environment.apiBaseUrl}/api/v1/sprints`);
+    return this.http.get<PagedResponse<SprintSummary>>(`${environment.apiBaseUrl}/api/v1/sprints`)
+      .pipe(map(r => r.content));
+  }
+
+  getUsers(): Observable<UserSummary[]> {
+    return this.http.get<UserSummary[]>(`${environment.apiBaseUrl}/api/v1/users`);
   }
 }

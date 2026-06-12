@@ -14,13 +14,7 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { TaskService } from '../../../core/tasks/task.service';
-import { TaskLabel, SprintSummary, TaskRequest } from '../../../core/tasks/task.models';
-
-interface AssigneeOption {
-  id: string;
-  displayName: string;
-  email: string;
-}
+import { TaskLabel, SprintSummary, UserSummary, TaskRequest } from '../../../core/tasks/task.models';
 
 @Component({
   selector: 'app-task-form',
@@ -55,14 +49,11 @@ export class TaskFormComponent implements OnInit {
   readonly submitting = signal(false);
   readonly availableLabels = signal<TaskLabel[]>([]);
   readonly availableSprints = signal<SprintSummary[]>([]);
+  readonly availableAssignees = signal<UserSummary[]>([]);
+  readonly selectedLabelValue = signal<string>('');
   readonly pageTitle = signal('New Task');
 
   private taskId: string | null = null;
-
-  readonly availableAssignees: AssigneeOption[] = [
-    { id: 'martina', displayName: 'Martina', email: 'martina@planner.local' },
-    { id: 'sebastian', displayName: 'Sebastian', email: 'sebastian@planner.local' },
-  ];
 
   readonly taskForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -87,10 +78,12 @@ export class TaskFormComponent implements OnInit {
     forkJoin({
       labels: this.taskService.getLabels(),
       sprints: this.taskService.getSprints(),
+      users: this.taskService.getUsers(),
     }).subscribe({
-      next: ({ labels, sprints }) => {
+      next: ({ labels, sprints, users }) => {
         this.availableLabels.set(labels);
         this.availableSprints.set(sprints);
+        this.availableAssignees.set(users);
 
         if (this.taskId) {
           this.loadExistingTask(this.taskId);
@@ -175,10 +168,12 @@ export class TaskFormComponent implements OnInit {
   }
 
   addLabel(labelId: string): void {
+    if (!labelId) return;
     const current = this.taskForm.controls.labelIds.value;
     if (!current.includes(labelId)) {
       this.taskForm.controls.labelIds.setValue([...current, labelId]);
     }
+    this.selectedLabelValue.set('');
   }
 
   removeLabel(labelId: string): void {

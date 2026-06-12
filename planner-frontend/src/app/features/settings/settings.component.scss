@@ -81,6 +81,13 @@
   color: var(--color-text-secondary);
 }
 
+.setting-hint {
+  margin: var(--spacing-xs) 0 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 .setting-action {
   flex-shrink: 0;
 
