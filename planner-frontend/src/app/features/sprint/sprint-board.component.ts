@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCardModule } from '@angular/material/card';
 import { SprintService } from '../../core/sprint/sprint.service';
 import { TaskService } from '../../core/tasks/task.service';
 import { SprintSummary, TaskListItem, TaskStatus } from '../../core/tasks/task.models';
@@ -26,6 +27,7 @@ interface BoardColumn {
     MatChipsModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatCardModule,
   ],
   templateUrl: './sprint-board.component.html',
   styleUrl: './sprint-board.component.scss',
@@ -41,6 +43,10 @@ export class SprintBoardComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly noActiveSprint = signal(false);
   readonly creatingSpint = signal(false);
+  readonly upcomingSprints = signal<SprintSummary[]>([]);
+  readonly showNewSprintForm = signal(false);
+  readonly newSprintYear = signal<number>(new Date().getFullYear());
+  readonly newSprintWeek = signal<number>(0);
 
   readonly sprintName = computed(() => {
     const s = this.sprint();
@@ -64,6 +70,7 @@ export class SprintBoardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSprint();
+    this.loadUpcomingSprints();
   }
 
   loadSprint(): void {
@@ -104,18 +111,41 @@ export class SprintBoardComponent implements OnInit {
     });
   }
 
+  activateSprint(upcoming: SprintSummary): void {
+    this.sprintService.activateSprint(upcoming.id).subscribe({
+      next: () => {
+        this.loadSprint();
+        this.loadUpcomingSprints();
+      },
+      error: () => {
+        this.error.set('Failed to activate sprint. Please try again.');
+      }
+    });
+  }
+
+  createNewSprint(): void {
+    const year = this.newSprintYear();
+    const week = this.newSprintWeek() || undefined;
+    this.sprintService.createSprint(year, week).subscribe({
+      next: () => {
+        this.loadUpcomingSprints();
+        this.showNewSprintForm.set(false);
+      },
+      error: () => {
+        this.error.set('Failed to create sprint. Please try again.');
+      }
+    });
+  }
+
   onDrop(event: CdkDragDrop<TaskListItem[]>, targetStatus: TaskStatus): void {
     if (event.previousContainer === event.container) {
-      // Same column reorder — no status change needed
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
       return;
     }
 
-    // Cross-column drop
     const task = event.previousContainer.data[event.previousIndex];
     const previousStatus = task.status;
 
-    // Optimistic update
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
@@ -128,7 +158,6 @@ export class SprintBoardComponent implements OnInit {
 
     this.taskService.updateTask(task.id, { status: targetStatus }).subscribe({
       error: () => {
-        // Revert on failure
         this.tasks.update(ts =>
           ts.map(t => t.id === task.id ? { ...t, status: previousStatus } : t)
         );
@@ -145,14 +174,12 @@ export class SprintBoardComponent implements OnInit {
 
     const newStatus = statusOrder[newIndex];
 
-    // Optimistic update
     this.tasks.update(tasks =>
       tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t)
     );
 
     this.taskService.updateTask(task.id, { status: newStatus }).subscribe({
       error: () => {
-        // Revert on failure
         this.tasks.update(tasks =>
           tasks.map(t => t.id === task.id ? { ...t, status: task.status } : t)
         );
@@ -195,6 +222,13 @@ export class SprintBoardComponent implements OnInit {
         this.error.set('Failed to load tasks. Please try again.');
         this.loading.set(false);
       }
+    });
+  }
+
+  private loadUpcomingSprints(): void {
+    this.sprintService.getUpcomingSprints().subscribe({
+      next: (sprints) => this.upcomingSprints.set(sprints),
+      error: () => this.upcomingSprints.set([])
     });
   }
 }

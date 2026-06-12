@@ -19,6 +19,7 @@ import java.time.temporal.IsoFields;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -32,17 +33,12 @@ public class SprintService {
 
     // ─── Public API ───────────────────────────────────────────────────────────
 
-    /**
-     * Returns the sprint whose date range contains today (Europe/Zurich).
-     * Throws 404 if no sprint covers today.
-     */
     @Transactional(readOnly = true)
     public SprintSummaryResponse getCurrentSprint() {
-        LocalDate today = LocalDate.now(ZURICH);
-        return sprintRepository.findCurrentSprint(today)
+        return sprintRepository.findFirstByStatus("ACTIVE")
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "No sprint found for today"));
+                        HttpStatus.NOT_FOUND, "No active sprint found"));
     }
 
     /**
@@ -116,7 +112,7 @@ public class SprintService {
         LocalDate monday = anyDayInWeek.with(DayOfWeek.MONDAY);
         LocalDate sunday = monday.plusDays(6);
 
-        String name = String.format("Sprint %d-W%02d", isoYear, isoWeek);
+        String name = String.format("%d - Woche %02d", isoYear, isoWeek);
         log.info("Creating sprint '{}' ({} – {})", name, monday, sunday);
 
         Sprint sprint = Sprint.builder()
@@ -125,9 +121,40 @@ public class SprintService {
                 .isoWeek(isoWeek)
                 .startDate(monday)
                 .endDate(sunday)
-                .status("ACTIVE")
+                .status("UPCOMING")
                 .build();
         return sprintRepository.save(sprint);
+    }
+
+    @Transactional
+    public SprintSummaryResponse activateSprint(UUID id) {
+        Sprint sprint = sprintRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Sprint not found"));
+        sprint.setStatus("ACTIVE");
+        return toResponse(sprintRepository.save(sprint));
+    }
+
+    @Transactional(readOnly = true)
+    public List<SprintSummaryResponse> listUpcoming() {
+        return sprintRepository.findByStatusOrderByStartDateAsc("UPCOMING")
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void ensureUpcomingSprintsExist() {
+        LocalDate nextMonday = LocalDate.now(ZURICH)
+                .with(DayOfWeek.MONDAY)
+                .plusWeeks(1);
+        IntStream.range(0, 4).forEach(offset -> {
+            LocalDate weekDay = nextMonday.plusWeeks(offset);
+            int isoYear = weekDay.get(IsoFields.WEEK_BASED_YEAR);
+            int isoWeek = weekDay.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            findOrCreate(isoYear, isoWeek);
+        });
+        log.info("SprintService: ensured upcoming sprints for next 4 ISO weeks");
     }
 
     public SprintSummaryResponse toResponse(Sprint sprint) {

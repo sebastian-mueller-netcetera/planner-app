@@ -41,6 +41,10 @@ public final class TaskSpecification {
         return (root, query, cb) -> cb.equal(root.get("sprint").get("id"), sprintId);
     }
 
+    public static Specification<Task> noSprint() {
+        return (root, query, cb) -> cb.isNull(root.get("sprint"));
+    }
+
     public static Specification<Task> hasNoDueDate() {
         return (root, query, cb) -> cb.isNull(root.get("dueDate"));
     }

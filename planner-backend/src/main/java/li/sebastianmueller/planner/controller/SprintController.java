@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/sprints")
 @RequiredArgsConstructor
@@ -52,5 +55,15 @@ public class SprintController {
         SprintSummaryResponse response = sprintService.createSprint(
                 request != null ? request : new SprintRequest());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/{id}/activate")
+    public ResponseEntity<SprintSummaryResponse> activate(@PathVariable String id) {
+        return ResponseEntity.ok(sprintService.activateSprint(UUID.fromString(id)));
+    }
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<List<SprintSummaryResponse>> upcoming() {
+        return ResponseEntity.ok(sprintService.listUpcoming());
     }
 }

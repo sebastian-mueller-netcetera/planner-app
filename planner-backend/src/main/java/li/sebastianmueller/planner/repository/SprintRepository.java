@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,4 +18,8 @@ public interface SprintRepository extends JpaRepository<Sprint, UUID> {
 
     @Query("SELECT s FROM Sprint s WHERE s.startDate <= :today AND s.endDate >= :today")
     Optional<Sprint> findCurrentSprint(@Param("today") LocalDate today);
+
+    Optional<Sprint> findFirstByStatus(String status);
+
+    List<Sprint> findByStatusOrderByStartDateAsc(String status);
 }

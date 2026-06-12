@@ -64,6 +64,9 @@ public class TaskService {
             if (labelId != null) {
                 spec = spec.and(TaskSpecification.hasLabel(labelId));
             }
+            if (sprintId == null) {
+                spec = spec.and(TaskSpecification.noSprint());
+            }
             if (sprintId != null) {
                 spec = spec.and(TaskSpecification.hasSprint(sprintId));
             }

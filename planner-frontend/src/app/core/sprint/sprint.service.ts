@@ -13,11 +13,22 @@ export class SprintService {
     return this.http.get<SprintSummary>(`${this.baseUrl}/current`);
   }
 
-  createSprint(): Observable<SprintSummary> {
-    return this.http.post<SprintSummary>(this.baseUrl, {});
+  createSprint(isoYear?: number, isoWeek?: number): Observable<SprintSummary> {
+    const body: { isoYear?: number; isoWeek?: number } = {};
+    if (isoYear !== undefined) body['isoYear'] = isoYear;
+    if (isoWeek !== undefined) body['isoWeek'] = isoWeek;
+    return this.http.post<SprintSummary>(this.baseUrl, body);
   }
 
   getSprints(): Observable<SprintSummary[]> {
     return this.http.get<SprintSummary[]>(this.baseUrl);
+  }
+
+  getUpcomingSprints(): Observable<SprintSummary[]> {
+    return this.http.get<SprintSummary[]>(`${this.baseUrl}/upcoming`);
+  }
+
+  activateSprint(id: string): Observable<SprintSummary> {
+    return this.http.post<SprintSummary>(`${this.baseUrl}/${id}/activate`, {});
   }
 }

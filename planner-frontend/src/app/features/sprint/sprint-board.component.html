@@ -125,4 +125,53 @@
       }
     </div>
   }
+
+  <!-- Upcoming sprints -->
+  @if (upcomingSprints().length > 0) {
+    <mat-card class="upcoming-card">
+      <mat-card-header>
+        <mat-card-title>Upcoming Sprints</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (upcoming of upcomingSprints(); track upcoming.id) {
+          <div class="upcoming-row">
+            <div class="upcoming-info">
+              <span class="upcoming-name">{{ upcoming.name }}</span>
+              <span class="upcoming-dates">{{ upcoming.startDate }} → {{ upcoming.endDate }}</span>
+            </div>
+            <button mat-raised-button color="primary" (click)="activateSprint(upcoming)">
+              Aktivieren
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- New sprint actions -->
+  @if (!loading()) {
+    <div class="new-sprint-actions">
+      @if (!showNewSprintForm()) {
+        <button mat-button (click)="showNewSprintForm.set(true)">
+          <mat-icon>add</mat-icon>
+          Neue Sprint erstellen
+        </button>
+      } @else {
+        <div class="new-sprint-form">
+          <input type="number"
+                 class="sprint-input"
+                 [value]="newSprintYear()"
+                 (input)="newSprintYear.set(+$any($event.target).value)"
+                 placeholder="Jahr" />
+          <input type="number"
+                 class="sprint-input"
+                 [value]="newSprintWeek() || ''"
+                 (input)="newSprintWeek.set(+$any($event.target).value)"
+                 placeholder="Woche (auto)" />
+          <button mat-raised-button color="primary" (click)="createNewSprint()">Erstellen</button>
+          <button mat-button (click)="showNewSprintForm.set(false)">Abbrechen</button>
+        </div>
+      }
+    </div>
+  }
 </div>

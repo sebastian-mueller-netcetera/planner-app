@@ -18,9 +18,9 @@ public class SprintScheduler {
     private final SprintService sprintService;
 
     @Scheduled(cron = "0 0 0 * * MON", zone = "Europe/Zurich")
-    public void createCurrentWeekSprint() {
-        log.info("SprintScheduler: triggering auto-create for current ISO week sprint");
-        sprintService.getOrCreateCurrentWeekSprint();
-        log.info("SprintScheduler: auto-create complete");
+    public void ensureUpcomingSprints() {
+        log.info("SprintScheduler: ensuring next 4 upcoming sprints exist");
+        sprintService.ensureUpcomingSprintsExist();
+        log.info("SprintScheduler: upcoming sprint check complete");
     }
 }
