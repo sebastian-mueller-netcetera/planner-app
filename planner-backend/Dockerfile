@@ -3,14 +3,9 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Copy Maven wrapper + pom first for dependency cache layer
+# Copy everything and build (no separate dep-cache layer — avoids timeout on small VPS)
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
-
-# Pre-fetch dependencies (cached unless pom.xml changes)
-RUN ./mvnw dependency:go-offline -q
-
-# Copy source and build
 COPY src ./src
 RUN ./mvnw package -DskipTests -q
 
