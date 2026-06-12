@@ -30,15 +30,15 @@ public class UserService {
     public void updateGoogleRefreshToken(UUID userId, String encryptedToken) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        user.setGoogleRefreshTokenEncrypted(encryptedToken);
+        user.setGoogleCalendarToken(encryptedToken);
         userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
     public boolean hasGoogleRefreshToken(UUID userId) {
         return userRepository.findById(userId)
-                .map(user -> user.getGoogleRefreshTokenEncrypted() != null
-                        && !user.getGoogleRefreshTokenEncrypted().isBlank())
+                .map(user -> user.getGoogleCalendarToken() != null
+                        && !user.getGoogleCalendarToken().isBlank())
                 .orElse(false);
     }
 

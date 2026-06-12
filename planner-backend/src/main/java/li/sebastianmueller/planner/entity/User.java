@@ -36,6 +36,12 @@ public class User {
     @Column(name = "google_refresh_token_encrypted")
     private String googleRefreshTokenEncrypted;
 
+    /**
+     * Encrypted Google Calendar OAuth2 refresh token. Null until the user completes Google OAuth.
+     */
+    @Column(name = "google_calendar_token")
+    private String googleCalendarToken;
+
     @Column(name = "google_calendar_a_id")
     private String googleCalendarAId;
 
