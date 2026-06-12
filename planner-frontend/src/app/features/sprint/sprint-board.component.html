@@ -1,0 +1,123 @@
+<div class="page-container">
+  <!-- Loading state -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading sprint…</p>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (error(); as errorMsg) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h3>Something went wrong</h3>
+      <p>{{ errorMsg }}</p>
+      <button mat-flat-button color="primary" (click)="loadSprint()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- No active sprint -->
+  @if (noActiveSprint() && !loading()) {
+    <div class="empty-state">
+      <mat-icon>view_kanban</mat-icon>
+      <h3>No active sprint</h3>
+      <p>Create a sprint for the current week to start tracking tasks.</p>
+      <button mat-flat-button color="primary" (click)="createSprint()" [disabled]="creatingSpint()">
+        @if (creatingSpint()) {
+          <mat-spinner diameter="18"></mat-spinner>
+        } @else {
+          <mat-icon>add</mat-icon>
+        }
+        Create Sprint
+      </button>
+    </div>
+  }
+
+  <!-- Sprint board -->
+  @if (sprint() && !loading() && !error()) {
+    <header class="sprint-header">
+      <div class="sprint-title-group">
+        <h1 class="page-title">{{ sprintName() }}</h1>
+        <span class="sprint-week-label">{{ sprintWeekLabel() }}</span>
+      </div>
+      <mat-chip-set aria-label="Sprint status">
+        <mat-chip highlighted>Active</mat-chip>
+      </mat-chip-set>
+    </header>
+
+    <div class="board-columns">
+      @for (column of columns(); track column.id) {
+        <div class="board-column" [attr.data-column]="column.id">
+          <div class="column-header">
+            <span class="column-title">{{ column.label }}</span>
+            <span class="column-count">{{ column.tasks.length }}</span>
+          </div>
+          <div class="column-body">
+            @if (column.tasks.length === 0) {
+              <div class="column-empty">
+                <p>No tasks</p>
+              </div>
+            } @else {
+              @for (task of column.tasks; track task.id) {
+                <div class="task-card">
+                  <div class="task-card-header">
+                    <span class="task-title">{{ task.title }}</span>
+                  </div>
+
+                  @if (task.labels.length > 0) {
+                    <div class="task-labels">
+                      @for (label of task.labels; track label.id) {
+                        <span class="task-label" [style.background-color]="label.color">
+                          {{ label.name }}
+                        </span>
+                      }
+                    </div>
+                  }
+
+                  <div class="task-card-footer">
+                    <div class="task-meta">
+                      @if (task.assignee) {
+                        <span class="task-assignee" [matTooltip]="task.assignee.displayName">
+                          {{ getInitial(task.assignee.displayName) }}
+                        </span>
+                      }
+                      @if (task.dueDate) {
+                        <span class="task-due" [class.overdue]="isOverdue(task.dueDate)">
+                          <mat-icon>schedule</mat-icon>
+                          {{ getRelativeDate(task.dueDate) }}
+                        </span>
+                      }
+                    </div>
+
+                    <div class="task-actions">
+                      @if (column.id !== 'BACKLOG') {
+                        <button mat-icon-button
+                                class="move-btn"
+                                (click)="moveTask(task, 'left')"
+                                matTooltip="Move left">
+                          <mat-icon>chevron_left</mat-icon>
+                        </button>
+                      }
+                      @if (column.id !== 'DONE') {
+                        <button mat-icon-button
+                                class="move-btn"
+                                (click)="moveTask(task, 'right')"
+                                matTooltip="Move right">
+                          <mat-icon>chevron_right</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

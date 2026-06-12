@@ -1,0 +1,144 @@
+package li.sebastianmueller.planner.service;
+
+import li.sebastianmueller.planner.dto.*;
+import li.sebastianmueller.planner.entity.Sprint;
+import li.sebastianmueller.planner.repository.SprintRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.IsoFields;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class SprintService {
+
+    private static final ZoneId ZURICH = ZoneId.of("Europe/Zurich");
+
+    private final SprintRepository sprintRepository;
+    private final TaskService taskService;
+
+    // ─── Public API ───────────────────────────────────────────────────────────
+
+    /**
+     * Returns the sprint whose date range contains today (Europe/Zurich).
+     * Throws 404 if no sprint covers today.
+     */
+    @Transactional(readOnly = true)
+    public SprintSummaryResponse getCurrentSprint() {
+        LocalDate today = LocalDate.now(ZURICH);
+        return sprintRepository.findCurrentSprint(today)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "No sprint found for today"));
+    }
+
+    /**
+     * Idempotent: returns existing sprint for the current ISO week, or creates one.
+     * Used by the scheduler and by manual POST /api/v1/sprints.
+     */
+    @Transactional
+    public SprintSummaryResponse getOrCreateCurrentWeekSprint() {
+        LocalDate today = LocalDate.now(ZURICH);
+        int isoYear = today.get(IsoFields.WEEK_BASED_YEAR);
+        int isoWeek = today.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        return findOrCreate(isoYear, isoWeek);
+    }
+
+    /**
+     * Returns all sprints paged, newest first (caller supplies Pageable with sort).
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<SprintSummaryResponse> listSprints(Pageable pageable) {
+        Page<Sprint> page = sprintRepository.findAll(pageable);
+        List<SprintSummaryResponse> content = page.getContent().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+        return PagedResponse.<SprintSummaryResponse>builder()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
+
+    /**
+     * Creates a sprint for the given ISO year/week (idempotent).
+     * If isoYear/isoWeek are absent in the request, defaults to the current week.
+     */
+    @Transactional
+    public SprintSummaryResponse createSprint(SprintRequest request) {
+        if (request.getIsoYear() != null && request.getIsoWeek() != null) {
+            return findOrCreate(request.getIsoYear(), request.getIsoWeek());
+        }
+        return getOrCreateCurrentWeekSprint();
+    }
+
+    /**
+     * Returns tasks belonging to the given sprint, paged (page 0, size 100, asc createdAt).
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<TaskListItemResponse> getTasksForSprint(UUID sprintId) {
+        sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Sprint not found"));
+        return taskService.list(null, null, null, null, sprintId, null,
+                0, 100, "createdAt", "asc");
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private SprintSummaryResponse findOrCreate(int isoYear, int isoWeek) {
+        return sprintRepository.findByIsoYearAndIsoWeek(isoYear, isoWeek)
+                .map(this::toResponse)
+                .orElseGet(() -> toResponse(createSprintForWeek(isoYear, isoWeek)));
+    }
+
+    private Sprint createSprintForWeek(int isoYear, int isoWeek) {
+        // Derive Monday of the target ISO week from a reference date in that week
+        LocalDate anyDayInWeek = LocalDate.now(ZURICH)
+                .with(IsoFields.WEEK_BASED_YEAR, isoYear)
+                .with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, isoWeek);
+        LocalDate monday = anyDayInWeek.with(DayOfWeek.MONDAY);
+        LocalDate sunday = monday.plusDays(6);
+
+        String name = String.format("Sprint %d-W%02d", isoYear, isoWeek);
+        log.info("Creating sprint '{}' ({} – {})", name, monday, sunday);
+
+        Sprint sprint = Sprint.builder()
+                .name(name)
+                .isoYear(isoYear)
+                .isoWeek(isoWeek)
+                .startDate(monday)
+                .endDate(sunday)
+                .status("ACTIVE")
+                .build();
+        return sprintRepository.save(sprint);
+    }
+
+    public SprintSummaryResponse toResponse(Sprint sprint) {
+        return SprintSummaryResponse.builder()
+                .id(sprint.getId())
+                .name(sprint.getName())
+                .isoYear(sprint.getIsoYear())
+                .isoWeek(sprint.getIsoWeek())
+                .startDate(sprint.getStartDate())
+                .endDate(sprint.getEndDate())
+                .status(sprint.getStatus())
+                .build();
+    }
+}

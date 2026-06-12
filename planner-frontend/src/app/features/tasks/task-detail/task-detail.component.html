@@ -1,0 +1,122 @@
+<div class="page-container">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  <header class="detail-header">
+    <button mat-icon-button (click)="goBack()" aria-label="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="page-title">Task Detail</h1>
+    <span class="spacer"></span>
+    @if (task()) {
+      <button mat-icon-button aria-label="Edit task" routerLink="edit">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button aria-label="Delete task" (click)="deleteTask()" color="warn">
+        <mat-icon>delete</mat-icon>
+      </button>
+    }
+  </header>
+
+  @if (task(); as t) {
+    <article class="task-content">
+      <div class="task-title-row">
+        <h2 class="task-title">{{ t.title }}</h2>
+        <button mat-flat-button (click)="cycleStatus()" class="status-btn status-{{ t.status | lowercase }}">
+          <mat-icon>{{ statusIcon }}</mat-icon>
+          {{ statusLabel }}
+        </button>
+      </div>
+
+      <div class="status-badge status-{{ t.status | lowercase }}">
+        {{ t.status.replace('_', ' ') }}
+      </div>
+
+      <section class="task-metadata">
+        <div class="meta-row">
+          <mat-icon>schedule</mat-icon>
+          <span>Due: {{ t.dueDate ? (t.dueDate | date:'mediumDate') : '—' }}</span>
+        </div>
+        <div class="meta-row">
+          <mat-icon>person</mat-icon>
+          <span>Assignee: {{ t.assignee?.displayName || 'Unassigned' }}</span>
+        </div>
+        @if (t.sprint) {
+          <div class="meta-row">
+            <mat-icon>sprint</mat-icon>
+            <span>Sprint: {{ t.sprint.name }}</span>
+          </div>
+        }
+        @if (t.labels.length > 0) {
+          <div class="meta-row">
+            <mat-icon>label</mat-icon>
+            <mat-chip-set>
+              @for (label of t.labels; track label.id) {
+                <mat-chip [style.--mdc-chip-label-text-color]="label.color">
+                  {{ label.name }}
+                </mat-chip>
+              }
+            </mat-chip-set>
+          </div>
+        }
+      </section>
+
+      <section class="task-description">
+        <h3>Description</h3>
+        <p class="description-text">{{ t.description || 'No description provided.' }}</p>
+      </section>
+
+      <section class="task-comments">
+        <h3>Comments ({{ t.comments.length }})</h3>
+
+        @if (t.comments.length === 0) {
+          <p class="no-comments">No comments yet. Be the first to comment.</p>
+        } @else {
+          <div class="comments-list">
+            @for (comment of t.comments; track comment.id) {
+              <div class="comment-item">
+                <div class="comment-header">
+                  <strong>{{ comment.author.displayName }}</strong>
+                  <span class="comment-date">{{ comment.createdAt | date:'short' }}</span>
+                </div>
+                <p class="comment-body">{{ comment.body }}</p>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="add-comment-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Add a comment</mat-label>
+            <textarea
+              matInput
+              [ngModel]="commentBody()"
+              (ngModelChange)="commentBody.set($event)"
+              placeholder="Write your comment..."
+              rows="3"
+            ></textarea>
+          </mat-form-field>
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="addComment()"
+            [disabled]="!commentBody().trim() || submittingComment()"
+          >
+            <mat-icon>send</mat-icon>
+            {{ submittingComment() ? 'Sending...' : 'Comment' }}
+          </button>
+        </div>
+      </section>
+    </article>
+  } @else if (!loading()) {
+    <div class="empty-state">
+      <mat-icon>assignment</mat-icon>
+      <h3>Task not found</h3>
+      <p>This task may have been moved or deleted.</p>
+      <a mat-flat-button color="primary" routerLink="/backlog">
+        Back to Backlog
+      </a>
+    </div>
+  }
+</div>

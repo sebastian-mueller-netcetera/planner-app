@@ -1,0 +1,16 @@
+# Normalize line endings
+* text=auto eol=lf
+*.sh text eol=lf
+planner-backend/mvnw text eol=lf
+planner-backend/mvnw.cmd text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.jar binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.gz binary

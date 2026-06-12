@@ -1,0 +1,34 @@
+# ───── Frontend ─────
+planner-frontend/node_modules/
+planner-frontend/dist/
+planner-frontend/.angular/
+planner-frontend/.sass-cache/
+
+# ───── Backend ─────
+planner-backend/target/
+planner-backend/.mvn/wrapper/maven-wrapper.jar
+
+# ───── Environment / secrets ─────
+*.env
+.env.*
+*.local
+
+# ───── IDE ─────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ───── OS ─────
+.DS_Store
+Thumbs.db
+
+# ───── Logs ─────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

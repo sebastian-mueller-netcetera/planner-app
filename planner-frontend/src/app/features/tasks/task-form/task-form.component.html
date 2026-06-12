@@ -1,0 +1,96 @@
+<div class="page-container">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  <header class="form-header">
+    <button mat-icon-button (click)="goBack()" aria-label="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="page-title">{{ pageTitle() }}</h1>
+  </header>
+
+  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="task-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="What needs to be done?" />
+      @if (taskForm.controls.title.hasError('required') && taskForm.controls.title.touched) {
+        <mat-error>Title is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        placeholder="Add details, context, or acceptance criteria..."
+        rows="4"
+      ></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Due Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="dueDate" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Assignee</mat-label>
+      <mat-select formControlName="assigneeId">
+        <mat-option value="">Unassigned</mat-option>
+        @for (assignee of availableAssignees; track assignee.id) {
+          <mat-option [value]="assignee.id">{{ assignee.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Sprint</mat-label>
+      <mat-select formControlName="sprintId">
+        <mat-option value="">No sprint</mat-option>
+        @for (sprint of availableSprints(); track sprint.id) {
+          <mat-option [value]="sprint.id">{{ sprint.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="labels-section">
+      <label class="section-label">Labels</label>
+      <mat-chip-set>
+        @for (labelId of taskForm.controls.labelIds.value; track labelId) {
+          <mat-chip (removed)="removeLabel(labelId)">
+            {{ getLabelName(labelId) }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+      <mat-form-field appearance="outline" class="full-width label-select">
+        <mat-label>Add label</mat-label>
+        <mat-select (selectionChange)="addLabel($event.value)">
+          @for (label of availableLabels(); track label.id) {
+            <mat-option [value]="label.id">
+              {{ label.name }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-actions">
+      <button mat-button type="button" (click)="goBack()">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="submitting()"
+      >
+        <mat-icon>save</mat-icon>
+        {{ submitting() ? 'Saving...' : (isEditMode() ? 'Update Task' : 'Create Task') }}
+      </button>
+    </div>
+  </form>
+</div>

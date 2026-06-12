@@ -1,0 +1,57 @@
+services:
+  planner-postgres:
+    image: postgres:16-alpine
+    container_name: planner-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-planner}
+      POSTGRES_USER: ${POSTGRES_USER:-planner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - planner-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-planner} -d ${POSTGRES_DB:-planner}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - planner-net
+
+  planner-backend:
+    build:
+      context: ./planner-backend
+      dockerfile: Dockerfile
+    container_name: planner-backend
+    restart: unless-stopped
+    depends_on:
+      planner-postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://planner-postgres:5432/${POSTGRES_DB:-planner}
+    ports:
+      - "8080:8080"
+    networks:
+      - planner-net
+
+  planner-frontend:
+    build:
+      context: ./planner-frontend
+      dockerfile: Dockerfile
+    container_name: planner-frontend
+    restart: unless-stopped
+    depends_on:
+      - planner-backend
+    ports:
+      - "4200:80"
+    networks:
+      - planner-net
+
+volumes:
+  planner-db-data:
+    driver: local
+
+networks:
+  planner-net:
+    driver: bridge

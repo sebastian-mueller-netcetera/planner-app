@@ -1,0 +1,19 @@
+package li.sebastianmueller.planner.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class MeResponse {
+
+    private UUID id;
+    private String email;
+    private String displayName;
+}

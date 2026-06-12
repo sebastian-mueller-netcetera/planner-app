@@ -1,0 +1,64 @@
+<div class="page-container">
+  <header class="settings-header">
+    <h1 class="page-title">Settings</h1>
+  </header>
+
+  <div class="settings-sections">
+    <!-- Google Calendar -->
+    <mat-card class="settings-card">
+      <mat-card-content>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-icon-wrapper">
+              <mat-icon>calendar_month</mat-icon>
+            </div>
+            <div>
+              <h3 class="setting-title">Google Calendar</h3>
+              <p class="setting-description">
+                @if (calendarConnected()) {
+                  Connected — tasks with due dates sync to your calendar.
+                } @else {
+                  Connect your calendar to sync task deadlines.
+                }
+              </p>
+            </div>
+          </div>
+          <div class="setting-action">
+            @if (calendarConnected()) {
+              <button mat-stroked-button color="warn" (click)="disconnectCalendar()">
+                Disconnect
+              </button>
+            } @else {
+              <button mat-flat-button color="primary" (click)="connectCalendar()">
+                <mat-icon>link</mat-icon>
+                Connect
+              </button>
+            }
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Account -->
+    <mat-card class="settings-card">
+      <mat-card-content>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-icon-wrapper setting-icon-danger">
+              <mat-icon>logout</mat-icon>
+            </div>
+            <div>
+              <h3 class="setting-title">Sign out</h3>
+              <p class="setting-description">Sign out of your account on this device.</p>
+            </div>
+          </div>
+          <div class="setting-action">
+            <button mat-stroked-button color="warn" (click)="logout()">
+              Log out
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

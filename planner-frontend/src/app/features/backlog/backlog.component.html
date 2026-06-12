@@ -1,0 +1,100 @@
+<div class="page-container">
+  <header class="backlog-header">
+    <h1 class="page-title">Backlog</h1>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="status-filter">
+        <mat-select
+          [value]="statusFilter()"
+          (selectionChange)="onStatusChange($event.value)"
+          placeholder="Status"
+        >
+          @for (opt of statusOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Search tasks..."
+        [value]="searchQuery()"
+        (input)="onSearch($event)"
+      />
+    </mat-form-field>
+  </div>
+
+  <!-- Loading state -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (error(); as errorMsg) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMsg }}</span>
+    </div>
+  }
+
+  <!-- Task list -->
+  @if (!loading() && !error()) {
+    @if (tasks().length === 0) {
+      <div class="empty-state">
+        <mat-icon>inbox</mat-icon>
+        <h3>No tasks yet</h3>
+        <p>Create your first task to start organizing your work.</p>
+        <a mat-flat-button color="primary" routerLink="/tasks/new">
+          <mat-icon>add</mat-icon>
+          New Task
+        </a>
+      </div>
+    } @else {
+      <div class="task-list">
+        @for (task of tasks(); track task.id) {
+          <a class="task-card" [routerLink]="['/tasks', task.id]">
+            <div class="task-card-header">
+              <span class="task-title">{{ task.title }}</span>
+              <span
+                class="status-badge"
+                [class.status-backlog]="task.status === 'BACKLOG'"
+                [class.status-in-progress]="task.status === 'IN_PROGRESS'"
+                [class.status-done]="task.status === 'DONE'"
+              >
+                {{ task.status === 'IN_PROGRESS' ? 'In Progress' : task.status === 'DONE' ? 'Done' : 'Backlog' }}
+              </span>
+            </div>
+            <div class="task-card-meta">
+              @if (task.dueDate) {
+                <span class="due-date">
+                  <mat-icon>event</mat-icon>
+                  {{ task.dueDate | date:'mediumDate' }}
+                </span>
+              }
+              @if (task.labels.length > 0) {
+                <div class="label-chips">
+                  @for (label of task.labels; track label.id) {
+                    <span class="label-chip" [style.background-color]="label.color + '22'" [style.color]="label.color">
+                      {{ label.name }}
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </a>
+        }
+      </div>
+    }
+  }
+
+  <!-- FAB for new task -->
+  <a mat-fab color="primary" class="fab-new-task" routerLink="/tasks/new" aria-label="Create new task">
+    <mat-icon>add</mat-icon>
+  </a>
+</div>
