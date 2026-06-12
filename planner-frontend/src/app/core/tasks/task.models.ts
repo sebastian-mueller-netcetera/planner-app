@@ -44,6 +44,8 @@ export interface TaskRequest {
   assigneeId?: string | null;
   labelIds?: string[];
   sprintId?: string | null;
+  syncGoogleCalendarA?: boolean;
+  syncGoogleCalendarB?: boolean;
 }
 
 export interface Comment {
@@ -57,6 +59,8 @@ export interface Comment {
 export interface Task extends TaskListItem {
   description: string | null;
   comments: Comment[];
+  syncGoogleCalendarA: boolean;
+  syncGoogleCalendarB: boolean;
 }
 
 export interface TaskQueryParams {

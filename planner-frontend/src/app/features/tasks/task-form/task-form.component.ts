@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -29,6 +30,7 @@ import { TaskLabel, SprintSummary, UserSummary, TaskRequest } from '../../../cor
     MatDatepickerModule,
     MatNativeDateModule,
     MatChipsModule,
+    MatCheckboxModule,
     MatProgressBarModule,
     MatSnackBarModule,
   ],
@@ -62,6 +64,8 @@ export class TaskFormComponent implements OnInit {
     assigneeId: ['' as string],
     sprintId: ['' as string],
     labelIds: [[] as string[]],
+    syncGoogleCalendarA: [false],
+    syncGoogleCalendarB: [false],
   });
 
   ngOnInit(): void {
@@ -108,6 +112,8 @@ export class TaskFormComponent implements OnInit {
           assigneeId: task.assignee?.id || '',
           sprintId: task.sprint?.id || '',
           labelIds: task.labels.map(l => l.id),
+          syncGoogleCalendarA: task.syncGoogleCalendarA || false,
+          syncGoogleCalendarB: task.syncGoogleCalendarB || false,
         });
         this.loading.set(false);
       },
@@ -138,6 +144,8 @@ export class TaskFormComponent implements OnInit {
       assigneeId: raw.assigneeId || null,
       sprintId: raw.sprintId || null,
       labelIds: raw.labelIds,
+      syncGoogleCalendarA: raw.syncGoogleCalendarA,
+      syncGoogleCalendarB: raw.syncGoogleCalendarB,
     };
 
     if (this.isEditMode() && this.taskId) {

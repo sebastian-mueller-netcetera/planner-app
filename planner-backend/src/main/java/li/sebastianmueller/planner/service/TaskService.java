@@ -4,6 +4,7 @@ import li.sebastianmueller.planner.dto.*;
 import li.sebastianmueller.planner.entity.*;
 import li.sebastianmueller.planner.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TaskService {
 
     private final TaskRepository taskRepository;
@@ -29,6 +31,7 @@ public class TaskService {
     private final LabelRepository labelRepository;
     private final CommentRepository commentRepository;
     private final LabelService labelService;
+    private final GoogleCalendarService googleCalendarService;
 
     @Transactional(readOnly = true)
     public PagedResponse<TaskListItemResponse> list(
@@ -130,7 +133,12 @@ public class TaskService {
             task.setLabels(labels);
         }
 
-        return toDetailResponse(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        if (Boolean.TRUE.equals(saved.getSyncGoogleCalendarA())
+                || Boolean.TRUE.equals(saved.getSyncGoogleCalendarB())) {
+            triggerSync(saved);
+        }
+        return toDetailResponse(saved);
     }
 
     @Transactional
@@ -162,13 +170,16 @@ public class TaskService {
             task.setLabels(labels);
         }
 
-        return toDetailResponse(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        triggerSync(saved);
+        return toDetailResponse(saved);
     }
 
     @Transactional
     public void delete(UUID id) {
         Task task = taskRepository.findActiveById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+        triggerDesync(task);
         task.setArchivedAt(OffsetDateTime.now());
         taskRepository.save(task);
     }
@@ -260,6 +271,26 @@ public class TaskService {
                 .name(sprint.getName())
                 .status(sprint.getStatus())
                 .build();
+    }
+
+    // ─── Calendar sync helpers ────────────────────────────────────────────────
+
+    private void triggerSync(Task task) {
+        try {
+            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+            googleCalendarService.syncTask(task, UUID.fromString(userId));
+        } catch (Exception e) {
+            log.warn("Calendar sync skipped for task {}: {}", task.getId(), e.getMessage());
+        }
+    }
+
+    private void triggerDesync(Task task) {
+        try {
+            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+            googleCalendarService.desyncTask(task, UUID.fromString(userId));
+        } catch (Exception e) {
+            log.warn("Calendar desync skipped for task {}: {}", task.getId(), e.getMessage());
+        }
     }
 
     private Sort buildSort(String sortBy, String sortDir) {
